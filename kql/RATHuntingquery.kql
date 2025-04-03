@@ -1,0 +1,40 @@
+// Define an expanded list of remote administration, remote support, and common RAT executables
+let RMMTools = dynamic([
+    "TeamViewer.exe",
+    "AnyDesk.exe",
+    "ngrok.exe",
+    "mRemoteNG.exe",
+    "ScreenConnect.exe",
+    "Splashtop.exe",
+    "AteraAgent.exe",
+    "winvnc.exe",
+    "UltraViewer.exe",
+    "LogMeIn.exe",
+    "AmmyyAdmin.exe",
+    "AeroAdmin.exe",
+    "GoToAssist.exe",
+    "Bomgar.exe",
+    "ChromeRemoteDesktopHost.exe",
+    "Radmin.exe",
+    "RustDesk.exe",
+    "DWAgent.exe",
+    "Supremo.exe",
+    "RemoteUtilitiesHost.exe",
+    "ZohoAssist.exe",
+    // New addition for QuasarRAT or variations starting with "Quasar"
+    "Quasar.exe",
+    "QuasarRAT.exe"
+]);
+
+// Get all historical executions over the last 90 days (but before yesterday) for these tools
+let HistoricalExecutions = DeviceProcessEvents
+| where Timestamp >= ago(90d) and Timestamp < ago(1d)
+| where FileName in~ (RMMTools)
+| summarize by DeviceId, FileName;
+
+// Find any new occurrences in the last 24 hours that did NOT appear historically
+DeviceProcessEvents
+| where Timestamp >= ago(1d)
+| where FileName in~ (RMMTools)
+| join kind=leftanti HistoricalExecutions on DeviceId, FileName
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, LoggedOnUsers, InitiatingProcessFileName
